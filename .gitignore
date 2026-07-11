@@ -43,5 +43,4 @@ results/
 # Local scratch / debug
 tmp/
 *.lock
-src/debug.ipynb
 rebuild_notes.txt
