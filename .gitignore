@@ -178,3 +178,8 @@ tmp/*
 
 # Ignore CSV files in the root directory
 /*.csv
+
+# PyCharm IDE
+.idea/
+data/
+*.env
