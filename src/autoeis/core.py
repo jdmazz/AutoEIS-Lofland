@@ -14,7 +14,6 @@ Collection of functions core to AutoEIS functionality.
 """
 
 import logging
-import os
 import time
 import warnings
 from collections.abc import Iterable, Mapping
@@ -26,17 +25,19 @@ import jax.numpy as jnp  # noqa: F401
 import numpy as np
 import numpyro
 import pandas as pd
-import psutil
-from deprecated import deprecated
 from jax import config
-from mpire import WorkerPool
 from numpyro.distributions import Distribution
 from numpyro.infer import MCMC, NUTS
 from scipy.optimize import curve_fit
 from tqdm.auto import tqdm
 
-from autoeis import io, julia_helpers, metrics, models, parser, utils
-from autoeis.julia_helpers import ec, jl
+from autoeis import io, metrics, models, parser, utils
+from autoeis.backend import (
+    CircuitBackend,
+    JuliaBackend,
+    get_default_backend,
+    set_default_backend,
+)
 
 from .utils import InferenceResult
 
@@ -56,8 +57,10 @@ __all__ = [
     "filter_implausible_circuits",
     "perform_bayesian_inference",
     "compute_fitness_metrics",
-    "jl",
-    "ec",
+    "CircuitBackend",
+    "JuliaBackend",
+    "get_default_backend",
+    "set_default_backend",
 ]
 
 
@@ -123,6 +126,7 @@ def generate_equivalent_circuits(
     population_size: int = 100,
     terminals: str = "RLP",
     seed: int = None,
+    backend: CircuitBackend = None,
 ) -> pd.DataFrame:
     """Generates candidate circuits that fit the impedance data using
     evolutionary algorithms.
@@ -161,16 +165,19 @@ def generate_equivalent_circuits(
     # Set the seed for reproducibility (if not set, use current time in nanoseconds)
     seed = seed or time.time_ns() % 2**32
 
-    ec_kwargs = {
-        "head": complexity,
-        "terminals": terminals,
-        "convergence_threshold": tol,
-        "generations": generations,
-        "population_size": population_size,
-    }
-
-    ecm_generator = _generate_ecm_parallel_julia if parallel else _generate_ecm_serial
-    circuits = ecm_generator(freq, Z, iters, ec_kwargs, seed)
+    backend = backend or get_default_backend()
+    circuits = backend.generate(
+        freq,
+        Z,
+        iters=iters,
+        complexity=complexity,
+        tol=tol,
+        generations=generations,
+        population_size=population_size,
+        terminals=terminals,
+        parallel=parallel,
+        seed=seed,
+    )
 
     # Convert output to DataFrame with columns ("circuitstring", "Parameters")
     circuits = io.parse_ec_output(circuits)
@@ -178,130 +185,6 @@ def generate_equivalent_circuits(
     if not len(circuits):
         log.warning("No plausible circuits found. Increase 'tol', 'iters', or both!")
 
-    return circuits
-
-
-def _generate_ecm_serial(
-    freq: np.ndarray[float],
-    Z: np.ndarray[complex],
-    iters: int,
-    ec_kwargs: dict,
-    seed: int,
-) -> list[str]:
-    """Generates candidate circuits that fit the impedance data, in serial."""
-    # Set random seed for reproducibility
-    jl.seval(f"import Random; Random.seed!({seed})")
-
-    circuits = []
-    for _ in tqdm(range(iters), desc="Generating Candidate ECMs", leave=False):
-        utils.flush_streams()
-        try:
-            circuit = ec.circuit_evolution(Z, freq, **ec_kwargs, quiet=True)
-        except Exception as e:
-            log.error(f"Error generating circuit: {e}")
-            continue
-        circuits.append(circuit)
-    else:
-        utils.flush_streams()
-
-    circuits = [str(c) for c in circuits if c is not None]
-    return circuits
-
-
-def _generate_ecm_parallel_julia(
-    freq: np.ndarray[float],
-    Z: np.ndarray[complex],
-    iters: int,
-    ec_kwargs: dict,
-    seed: int,
-):
-    """Generates candidate circuits that fit the impedance data, in parallel
-    via Julia multiprocessing.
-    """
-    # Set random seed for reproducibility (Python and Julia)
-    # FIXME: This doesn't work when multiprocessing, use @everywhere instead
-    jl.seval(f"import Random; Random.seed!({seed})")
-
-    # HACK: To get a progress bar, chunk the iterations -> call Julia repeatedly
-    nprocs = psutil.cpu_count(logical=False)
-    # Double the number of workers to buffer for those with slow convergence
-    # (don't do this for small iters, otherwise progress bar becomes pointless)
-    nprocs = 2 * nprocs if (iters // nprocs) > 10 else nprocs
-    # NOTE: e.g., iters = 11, nprocs = 4 -> iters_chunked = [4, 4, 3]
-    iters_chunked = [nprocs] * (iters // nprocs)
-    if iters % nprocs:
-        iters_chunked.append(iters % nprocs)
-
-    # Perform parallelized GEP in chunks
-    circuits = []
-
-    with tqdm(total=iters, desc="Generating Candidate ECMs", miniters=1, leave=False) as pbar:
-        utils.flush_streams()
-        for iters_ in iters_chunked:
-            try:
-                circuits_ = ec.circuit_evolution_batch(
-                    Z, freq, **ec_kwargs, iters=iters_, quiet=True
-                )
-            except Exception as e:
-                log.error(f"Error generating circuits: {e}")
-                circuits_ = []
-            circuits += circuits_
-            pbar.update(iters_)
-            utils.flush_streams()
-
-    circuits = [str(c) for c in circuits if c is not None]
-    return circuits
-
-
-@deprecated(reason="This function is deprecated, use _generate_ecm_parallel_julia instead")
-def _generate_ecm_parallel_mpire(
-    freq: np.ndarray[float],
-    Z: np.ndarray[complex],
-    iters: int,
-    ec_kwargs: dict,
-    seed: int,
-):
-    """Generates candidate circuits that fit the impedance data, in parallel
-    via Python multiprocessing.
-    """
-
-    def circuit_evolution(seed: int):
-        """Closure to generate a single circuit to be used with multiprocessing."""
-        jl = julia_helpers.init_julia()
-        ec = julia_helpers.import_backend(jl)
-        # Set random seed for reproducibility
-        jl.seval(f"import Random; Random.seed!({seed})")
-        try:
-            circuit = ec.circuit_evolution(Z, freq, **ec_kwargs)
-        except Exception as e:
-            log.error(f"Error generating circuit: {e}")
-            return None
-        return circuit
-
-    nproc = os.cpu_count()
-    mpire_kwargs = {
-        "iterable_len": iters,
-        "progress_bar": True,
-        "progress_bar_style": "notebook",
-        "progress_bar_options": {"desc": "Circuit Evolution"},
-    }
-
-    # Julia cannot be initialized in the main process -> guard against this
-    runtime_error = False
-
-    # Set a different seed for each process
-    seed = [seed + i for i in range(iters)]
-
-    with WorkerPool(n_jobs=nproc) as pool:
-        try:
-            circuits = pool.map(circuit_evolution, seed, **mpire_kwargs)
-        except RuntimeError:
-            runtime_error = True
-
-    if runtime_error:
-        raise RuntimeError("Julia must not be manually initialized, restart the kernel.")
-
-    circuits = [str(c) for c in circuits if c is not None]
     return circuits
 
 
