@@ -8,7 +8,7 @@ from .julia_helpers import install_backend, install_julia
 @click.group("autoeis")
 @click.pass_context
 def autoeis_installer(context):
-    ctx = context
+    pass
 
 
 @click.option(

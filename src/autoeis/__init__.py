@@ -27,7 +27,7 @@ config = _Settings()
 _setup_logger()
 
 from . import backend, core, io, metrics, parser, utils, visualization  # noqa: F401, E402
-from .core import *  # noqa: E402
+from .core import *  # noqa: F403, E402
 from .julia_helpers import ec, jl  # noqa: F401, E402  (public handles to the Julia backend)
 from .version import __equivalent_circuits_jl_version__, __version__  # noqa: F401, E402
 from .visualization import rich_print  # noqa: F401, E402

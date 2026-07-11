@@ -26,6 +26,7 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
+    "src/autoeis/impedance",  # vendored impedance.py; do not lint/format
 ]
 
 # Same as Black.

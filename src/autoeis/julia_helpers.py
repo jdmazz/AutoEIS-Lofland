@@ -8,7 +8,6 @@ from juliapkg.deps import can_skip_resolve
 from juliapkg.find_julia import find_julia
 
 from .utils import suppress_output
-from .version import __equivalent_circuits_jl_version__
 
 log = logging.getLogger(__name__)
 
@@ -18,9 +17,9 @@ def install_julia(quiet=True):
     # Importing juliacall automatically installs Julia using juliapkg
     if quiet:
         with suppress_output():
-            import juliacall
+            import juliacall  # noqa: F401 (imported for its Julia-installing side effect)
     else:
-        import juliacall
+        import juliacall  # noqa: F401 (imported for its Julia-installing side effect)
 
 
 def install_backend(ec_path: Path = None, quiet=True):

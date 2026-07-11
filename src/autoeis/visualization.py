@@ -98,8 +98,8 @@ def draw_circuit(circuit: str) -> mpl.figure.Figure:
         Handle of the circuit figure
     """
     try:
-        from lcapy import CPE as P
-        from lcapy import C, L, R
+        from lcapy import CPE as P  # noqa: F401 (used via eval below)
+        from lcapy import C, L, R  # noqa: F401 (used via eval below)
     except ImportError:
         msg = "lcapy is not installed. Please install it using `pip install lcapy`."
         log.error(msg)
