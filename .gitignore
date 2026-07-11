@@ -183,3 +183,6 @@ tmp/*
 .idea/
 data/
 *.env
+
+# Debug files
+src/debug.ipynb

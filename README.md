@@ -3,6 +3,8 @@
 
 > [!NOTE]
 > This is a fork of [AUTODIAL/AutoEIS](https://github.com/AUTODIAL/AutoEIS), forked and modified by Jason Mazzaroth for Dr. Lofland's lab at Rowan University. For the upstream project and original documentation, see the source repository above. The citation details (from the original lab) are below and should be used if your journal publication uses this software.
+>
+> This fork pins `EquivalentCircuits.jl` to a fixed commit (see `src/autoeis/juliapkg.json`).
 
 > [!NOTE]
 > AutoEIS is now published in the Journal of Open Source Software (JOSS). You can find the paper [here](https://doi.org/10.21105/joss.06256). If you find AutoEIS useful, please consider citing it in your work.
@@ -26,17 +28,16 @@ AutoEIS is still under development and the API might change. If you find any bug
 
 ## Installation
 
-### Pip
-
-Open a terminal (or command prompt on Windows) and run the following command:
+Install miniconda first.
+Run from the repository root:
 
 ```bash
-pip install -U autoeis
+conda env create -f environment.yml
+conda activate autoeis-lofland
+python -m autoeis install
 ```
 
-Julia dependencies will be automatically installed at first import. It's recommended that you have your own Julia installation, but if you don't, Julia itself will also be installed automatically.
-
-> **How to install Julia?** If you decided to have your own Julia installation (recommended), the official way to install Julia is via [juliaup](https://github.com/JuliaLang/juliaup). [Juliaup](https://github.com/JuliaLang/juliaup) provides a command line interface to automatically install Julia (optionally multiple versions side by side). Working with [juliaup](https://github.com/JuliaLang/juliaup) is straightforward; Please follow the instructions on its GitHub [page](https://github.com/JuliaLang/juliaup).
+The install step fetches Julia 1.10 and the pinned `EquivalentCircuits.jl` automatically; no separate Julia install is required. Do not run `pip install -U autoeis`; that installs the upstream package from PyPI and ignores this fork's pin.
 
 ## Usage
 

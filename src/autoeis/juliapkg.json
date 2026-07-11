@@ -4,7 +4,7 @@
         "EquivalentCircuits": {
             "uuid": "da5bd070-f609-4e16-a30d-de86b3faa756",
             "url": "https://github.com/ma-sadeghi/EquivalentCircuits.jl",
-            "rev": "master"
+            "rev": "1a0cff98d7f1715355c9cdcd0cbe4ccc1dae8f18"
         }
     }
 }
