@@ -1289,7 +1289,11 @@ class InferenceResult:
         self.Z = Z
 
     def __repr__(self):
-        return f"InferenceResult at {id(self):#x}"
+        status = "converged" if self.converged else "not converged"
+        return (
+            f"InferenceResult(circuit={self.circuit!r}, "
+            f"{status}, divergences={self.num_divergences})"
+        )
 
     @functools.cached_property
     def variables(self):
