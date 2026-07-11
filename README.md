@@ -13,7 +13,7 @@ AutoEIS (Auto ee-eye-ess) is a Python package that automatically proposes statis
 
 ## Installation
 
-## Installing conda
+### Installing with conda
 
 You need conda before the install steps below. If you already have it, skip this.
 
