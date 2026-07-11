@@ -48,10 +48,32 @@ The install step fetches Julia 1.10 and the pinned `EquivalentCircuits.jl` autom
 
 ## Usage
 
-TODO
-
 > [!WARNING]
-> The examples are designed to be run interactively, so you should use a Jupyter notebook-like environment like Jupyter Lab, IPython Notebook, or VSCode. The examples may not work as expected if you run them in a non-interactive environment like a Python REPL. For a smooth experience, please use a supported environment.
+> AutoEIS's circuit search and inference are built for interactive use. Run the example below in a Jupyter notebook (Jupyter Lab, VS Code, etc.), not a plain Python REPL or a bare `python script.py` — it may not behave as expected outside a notebook-like environment.
+
+`perform_full_analysis` (the single-call entry point) is currently disabled upstream, so the supported path is the step-by-step pipeline: preprocess, generate candidate circuits, filter, then run Bayesian inference. This mirrors `examples/validation_synthetic.ipynb`, which validates each of these steps against synthetic data with known answers.
+
+```python
+import autoeis as ae
+
+# 1. Load impedance data as (freq, Z) — see data/Trial 2/ for a real example dataset,
+#    or ae.io.load_test_dataset() for the bundled sample.
+freq, Z = ae.io.load_test_dataset()
+
+# 2. Preprocess: drops points that fail Kramers-Kronig validation
+freq, Z = ae.utils.preprocess_impedance_data(freq, Z, tol_linKK=5e-2)
+
+# 3. Generate candidate equivalent circuits (runs the Julia search; slow on first call)
+circuits = ae.generate_equivalent_circuits(freq, Z, iters=100, seed=0)
+
+# 4. Filter out physically implausible circuits
+circuits = ae.filter_implausible_circuits(circuits)
+
+# 5. Bayesian inference on the surviving circuits' parameters
+results = ae.perform_bayesian_inference(circuits, freq, Z, num_warmup=2500, num_samples=1000)
+```
+
+`results` is a list of `InferenceResult` objects — one per surviving circuit, each carrying its fitted parameters, convergence status, and divergence count.
 
 # Citations
 
