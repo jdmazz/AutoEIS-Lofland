@@ -13,7 +13,29 @@ AutoEIS (Auto ee-eye-ess) is a Python package that automatically proposes statis
 
 ## Installation
 
-Install miniconda first.
+## Installing conda
+
+You need conda before the install steps below. If you already have it, skip this.
+
+**Windows**
+
+1. Download the installer: https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+2. Double-click it and click through the prompts, accepting the defaults.
+3. From the Start menu, open **Anaconda Prompt**; run all later commands there, not in regular Command Prompt.
+4. Confirm it worked: `conda --version`.
+
+**Linux**
+
+1. Download and run the installer:
+```bash
+   curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   bash Miniconda3-latest-Linux-x86_64.sh
+```
+   (On ARM machines such as a Raspberry Pi or Graviton instance, replace `x86_64` with `aarch64` in both places.)
+2. Accept the license and the default install location, and answer `yes` when it offers to initialize conda.
+3. Close and reopen your terminal; you should see `(base)` at the start of the prompt.
+4. Confirm it worked: `conda --version`.
+
 Run from the repository root:
 
 ```bash
@@ -31,8 +53,9 @@ TODO
 > [!WARNING]
 > The examples are designed to be run interactively, so you should use a Jupyter notebook-like environment like Jupyter Lab, IPython Notebook, or VSCode. The examples may not work as expected if you run them in a non-interactive environment like a Python REPL. For a smooth experience, please use a supported environment.
 
-> [!NOTE]
-> AutoEIS is now published in the Journal of Open Source Software (JOSS). You can find the paper [here](https://doi.org/10.21105/joss.06256). If you find AutoEIS useful, please consider citing it in your work.
+# Citations
+
+> AutoEIS is now published in the Journal of Open Source Software (JOSS). You can find the paper [here](https://doi.org/10.21105/joss.06256).
 >
 > > Sadeghi et al., (2025). AutoEIS: Automated equivalent circuit modeling from electrochemical impedance spectroscopy data using statistical machine learning. _Journal of Open Source Software_, 10(109), 6256, https://doi.org/10.21105/joss.06256
 >
