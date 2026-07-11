@@ -35,10 +35,9 @@ ENV/
 # OS
 .DS_Store
 
-# AutoEIS outputs & local data
+# AutoEIS outputs
 results/
 *.pkl
-data/
 /*.csv
 
 # Local scratch / debug
