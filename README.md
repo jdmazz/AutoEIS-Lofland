@@ -36,7 +36,7 @@ You need conda before the install steps below. If you already have it, skip this
 3. Close and reopen your terminal; you should see `(base)` at the start of the prompt.
 4. Confirm it worked: `conda --version`.
 
-Run from the repository root:
+### Run from the repository root:
 
 ```bash
 conda env create -f environment.yml
